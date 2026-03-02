@@ -3,334 +3,386 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026 喫茶小舖 - 團購點餐系統</title>
+    <title>2026 喫茶小舖點餐系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f4f1ea; }
-        .menu-card:hover { transform: translateY(-2px); transition: all 0.2s; }
-        .sticky-summary { position: sticky; bottom: 0; background: white; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); }
-        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #0d9488; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; margin-right: 8px; vertical-align: middle; }
+        .drink-card:hover { border-color: #f59e0b; }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #f59e0b;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="pb-24">
-    <div id="app" class="max-w-4xl mx-auto p-4">
-        <!-- Header -->
-        <header class="text-center py-6">
-            <h1 class="text-3xl font-bold text-teal-800">喫茶小舖 - 辦公室點餐</h1>
-            <p class="text-gray-600 mt-2">來店買五送一 · 外送買十送一</p>
-        </header>
+<body class="bg-slate-50 min-h-screen pb-20">
 
-        <!-- Order Form Section -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 class="text-xl font-bold mb-4 border-b pb-2 text-teal-700">1. 開始點餐</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">點餐人姓名</label>
-                    <input type="text" id="userName" class="mt-1 block w-full border rounded-md p-2" placeholder="請輸入姓名">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">選擇品項</label>
-                    <select id="drinkSelect" class="mt-1 block w-full border rounded-md p-2" onchange="updatePrice()">
-                        <!-- 菜單由 JS 動態載入 -->
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">甜度</label>
-                    <select id="sugar" class="mt-1 block w-full border rounded-md p-2">
-                        <option>正常</option><option>七分</option><option>半糖</option><option>微糖</option><option>二分</option><option>無糖</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">冰塊</label>
-                    <select id="ice" class="mt-1 block w-full border rounded-md p-2">
-                        <option>正常冰</option><option>少冰</option><option>微冰</option><option>去冰</option><option>常溫</option><option>溫熱</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">加料 (+10元)</label>
-                    <select id="topping" class="mt-1 block w-full border rounded-md p-2" onchange="updatePrice()">
-                        <option value="0">不加料</option>
-                        <option value="10">小麥可可脆球</option>
-                        <option value="10">黑糖珍珠</option>
-                        <option value="10">迷你黑糖珍珠</option>
-                        <option value="10">嫩仙草凍</option>
-                        <option value="10">島嶼椰果</option>
-                        <option value="10">纖果</option>
-                        <option value="10">琥珀Q凍</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button id="addBtn" onclick="addToOrder()" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-700 transition disabled:bg-gray-400">
-                        <span id="btnText">加入點餐清單 (NT$ <span id="currentPriceDisplay">0</span>)</span>
-                    </button>
-                </div>
-            </div>
-            <p id="syncStatus" class="mt-2 text-xs text-center text-gray-400"></p>
+    <header class="bg-amber-500 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">喫茶小舖 🥤 團購點餐</h1>
+            <div id="status" class="text-xs bg-amber-600 px-2 py-1 rounded">連線正常</div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 space-y-6">
+        
+        <!-- 使用者名稱輸入 -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <label class="block text-sm font-medium text-gray-700 mb-1">您的稱呼 (必填)</label>
+            <input type="text" id="userName" placeholder="例如：王小明" class="w-full border-gray-300 rounded-lg p-2 border focus:ring-2 focus:ring-amber-500 outline-none">
+        </section>
+
+        <!-- 飲料清單 -->
+        <div id="menuContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- 飲料分類由 JS 生成 -->
         </div>
 
-        <!-- Orders Record -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h2 class="text-xl font-bold text-teal-700">2. 點餐紀錄</h2>
-                <button onclick="clearAll()" class="text-red-500 text-sm hover:underline">清空全部</button>
+        <!-- 訂單紀錄區 -->
+        <section class="bg-white p-4 rounded-xl shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold border-l-4 border-amber-500 pl-2">目前訂單紀錄</h2>
+                <button onclick="fetchOrders()" class="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    刷新
+                </button>
             </div>
-            <div id="orderList" class="space-y-3">
-                <p class="text-gray-400 text-center py-4">目前尚無點餐紀錄</p>
+            <div id="orderList" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                <p class="text-gray-400 text-center py-4">讀取中...</p>
             </div>
-        </div>
+            
+            <div class="mt-6 pt-4 border-t">
+                <div class="flex justify-between items-center text-lg font-bold mb-4">
+                    <span>總計金額</span>
+                    <span id="totalPrice" class="text-amber-600 font-mono text-2xl">$0</span>
+                </div>
+                <button onclick="copyToLine()" class="w-full bg-green-500 text-white py-4 rounded-xl font-bold hover:bg-green-600 transition shadow-lg flex justify-center items-center gap-2 active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                    <span>生成 LINE 訂單格式</span>
+                </button>
+            </div>
+        </section>
 
-        <!-- Summary & Actions -->
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex justify-between items-center max-w-4xl mx-auto z-50">
-            <div>
-                <span class="text-gray-600">總計：</span>
-                <span class="text-2xl font-bold text-red-600" id="totalPrice">NT$ 0</span>
-                <span class="ml-2 text-sm text-gray-500" id="totalCount">(0 杯)</span>
-            </div>
-            <button onclick="generateLineMessage()" class="bg-green-500 text-white px-6 py-2 rounded-full font-bold hover:bg-green-600 shadow-lg flex items-center">
-                生成 LINE 訂單格式
-            </button>
-        </div>
-    </div>
+    </main>
 
-    <!-- Modal for LINE message -->
-    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-        <div class="bg-white rounded-lg w-full max-w-md p-6">
-            <h3 class="text-lg font-bold mb-4">LINE 訂單格式 (點擊複製)</h3>
-            <textarea id="lineContent" class="w-full h-64 border p-2 text-sm font-mono mb-4 bg-gray-50"></textarea>
-            <div class="flex gap-2">
-                <button onclick="copyLineMessage()" class="flex-1 bg-green-500 text-white py-2 rounded">複製內容</button>
-                <button onclick="toggleModal(false)" class="flex-1 bg-gray-200 py-2 rounded">關閉</button>
+    <!-- 點餐 Modal -->
+    <div id="orderModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 overflow-y-auto max-h-[90vh] shadow-2xl scale-up">
+            <h3 id="modalDrinkName" class="text-xl font-bold mb-4 text-gray-800">飲料名稱</h3>
+            
+            <div class="space-y-5">
+                <div>
+                    <p class="font-bold text-sm text-gray-500 mb-2 uppercase tracking-wider">選擇容量</p>
+                    <div id="sizeOptions" class="flex gap-2"></div>
+                </div>
+                <div>
+                    <p class="font-bold text-sm text-gray-500 mb-2 uppercase tracking-wider">選擇冰塊</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="ice-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('ice', '多冰')">多冰</button>
+                        <button class="ice-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('ice', '正常冰')">正常冰</button>
+                        <button class="ice-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('ice', '少冰')">少冰</button>
+                        <button class="ice-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('ice', '微冰')">微冰</button>
+                        <button class="ice-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('ice', '去冰')">去冰</button>
+                        <button class="ice-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('ice', '溫熱')">溫熱</button>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-bold text-sm text-gray-500 mb-2 uppercase tracking-wider">選擇甜度</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="sugar-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('sugar', '正常')">正常</button>
+                        <button class="sugar-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('sugar', '七分')">七分</button>
+                        <button class="sugar-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('sugar', '五分')">五分</button>
+                        <button class="sugar-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('sugar', '三分')">三分</button>
+                        <button class="sugar-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('sugar', '一分')">一分</button>
+                        <button class="sugar-opt border-2 p-2 rounded-lg text-sm transition-all hover:bg-amber-50" onclick="selectOpt('sugar', '無糖')">無糖</button>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-bold text-sm text-gray-500 mb-2 uppercase tracking-wider">加料 (+10元)</p>
+                    <select id="toppingOpt" class="w-full border-2 p-3 rounded-lg bg-white outline-none focus:border-amber-500">
+                        <option value="">不加料</option>
+                        <option value="小麥可可脆球">小麥可可脆球</option>
+                        <option value="黑糖珍珠">黑糖珍珠</option>
+                        <option value="迷你黑糖珍珠">迷你黑糖珍珠</option>
+                        <option value="嫩仙草凍">嫩仙草凍</option>
+                        <option value="島嶼椰果">島嶼椰果</option>
+                        <option value="琥珀Q凍">琥珀Q凍</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 border-2 rounded-xl text-gray-600 hover:bg-gray-50 font-medium transition">取消</button>
+                <button id="submitBtn" onclick="submitOrder()" class="flex-1 py-3 bg-amber-500 text-white rounded-xl font-bold shadow-md hover:bg-amber-600 transition flex justify-center items-center gap-2">
+                    <span>加入訂單</span>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // 設定 Google Script URL
-        const DEPLOY_ID = "AKfycbx6LndO5m-G5Fw-I_P1QSX1DMn1v6ESW4ea0gF3mOmnSd0ojIegyyQTyCrxD0VEpOQBZPCTN7qX"; // 更新後的 ID
-        const SCRIPT_URL = `https://script.google.com/macros/s/${DEPLOY_ID}/exec`;
+        // ！！！請在這裡替換成您的 Google Apps Script 網址 ！！！
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCfesJgTPDhmQnyIN1dmEldKFiX_QlUQoDYyn_0rTJH_-8Ch4mrM3FSYHbU5PwHA/exec";
 
-        const menu = [
+        const menuData = [
             { category: "冬季限定", items: [
-                { name: "仙草見泥", price: 75 }, { name: "芋泥奶奶", price: 75 }, { name: "芋泥波波", price: 75 },
-                { name: "黑糖薑茶", price: 45 }, { name: "薑汁撞奶", price: 55 }, { name: "薑汁歐蕾", price: 60 },
-                { name: "薑汁仙甘", price: 48 }, { name: "薑汁燒仙草", price: 55 }
+                { name: "仙草見泥", m: 75 }, { name: "芋泥奶奶", m: 75 }, { name: "芋泥波波", m: 75 },
+                { name: "黑糖薑茶", m: 45 }, { name: "薑汁撞奶", m: 55 }, { name: "薑汁歐蕾", m: 60 },
+                { name: "薑汁仙甘", m: 48 }, { name: "薑汁燒仙草", m: 55 }
             ]},
             { category: "私房特調", items: [
-                { name: "綠茶好芒/青茶好芒(L)", price: 55 }, { name: "香橙茉綠/百香茉綠(L)", price: 55 },
-                { name: "香橙多多/百香多多(L)", price: 60 }, { name: "蜜桃桂花烏龍(L)", price: 55 },
-                { name: "茉綠多多(L)", price: 55 }, { name: "翡翠檸檬綠(L)", price: 60 }, { name: "初見青梅(L)", price: 50 }
+                { name: "綠茶好芒/青茶好芒", l: 55 }, { name: "香橙茉綠/百香茉綠", l: 55 }, { name: "香橙多多/百香多多", l: 60 },
+                { name: "蜜桃桂花烏龍", l: 55 }, { name: "茉綠多多", l: 55 }, { name: "翡翠檸檬綠", l: 60 }, { name: "初見青梅", l: 50 }
             ]},
             { category: "喫茶必喝", items: [
-                { name: "哞³-清爽版", price: 69 }, { name: "哞³-重乳版", price: 69 },
-                { name: "重乳咖紅", price: 60 }, { name: "重乳烏龍", price: 60 },
-                { name: "阿君珍珠奶茶", price: 50 }, { name: "黑糖波波鮮奶", price: 60 }, { name: "黑哞", price: 65 }
+                { name: "哞³ - 清爽版", m: 69 }, { name: "哞³ - 重乳版", m: 69 }, { name: "重乳咖紅", m: 60 },
+                { name: "重乳烏龍", m: 60 }, { name: "阿君珍珠奶茶", m: 50 }, { name: "黑糖波波鮮奶", m: 60 }, { name: "黑哞", m: 65 }
             ]},
-            { category: "原葉手煮茶", items: [
-                { name: "桂花烏龍(L)", price: 35 }, { name: "韻焙烏龍(L)", price: 35 },
-                { name: "經典咖啡紅茶(L)", price: 35 }, { name: "青山茉綠(L)", price: 35 },
-                { name: "文山青茶(L)", price: 35 }, { name: "烏瓦莊園紅茶(L)", price: 35 }
+            { category: "100%蜂蜜", items: [
+                { name: "桂花烏龍蜜", l: 60 }, { name: "琥珀桂花蜜", l: 65 }, { name: "初見青梅蜜", l: 65 }, { name: "蜂蜜檸檬", l: 75 }
+            ]},
+            { category: "復刻風味", items: [
+                { name: "仙草甘茶", l: 40 }, { name: "嫩仙草甘茶", l: 45 }, { name: "復刻冬瓜", l: 40 }, { name: "冬瓜檸檬", l: 60 }, { name: "冰淇淋紅茶", l: 55 }
             ]},
             { category: "奶茶系列", items: [
-                { name: "牛奶糖奶蓋茶(L)", price: 60 }, { name: "珍珠烏瓦奶茶(L)", price: 55 },
-                { name: "烏瓦奶茶(L)", price: 55 }, { name: "琥珀桂花奶茶(L)", price: 60 },
-                { name: "韻焙烏龍歐蕾(L)", price: 65 }, { name: "嫩仙草紅茶歐蕾(L)", price: 70 }
+                { name: "牛奶糖奶蓋茶", l: 60 }, { name: "珍珠烏瓦奶茶", l: 55 }, { name: "烏瓦奶茶", l: 55 }, { name: "琥珀桂花奶茶", l: 60 },
+                { name: "韻焙烏龍歐蕾", l: 65 }, { name: "嫩仙草紅茶歐蕾", l: 70 }
+            ]},
+            { category: "原葉手煮茶", items: [
+                { name: "桂花烏龍", l: 35 }, { name: "韻焙烏龍", l: 35 }, { name: "經典咖啡紅茶", l: 35 }, { name: "青山茉綠", l: 35 },
+                { name: "文山青茶", l: 35 }, { name: "烏瓦莊園紅茶", l: 35 }
             ]}
         ];
 
-        let orders = JSON.parse(localStorage.getItem('teaOrders') || '[]');
+        let currentSelection = { drink: null, size: '', ice: '', sugar: '', price: 0 };
+        let allOrders = [];
+        let isSubmitting = false;
 
         function initMenu() {
-            const select = document.getElementById('drinkSelect');
-            let html = '<option value="" disabled selected>請選擇飲料</option>';
-            menu.forEach(cat => {
-                html += `<optgroup label="${cat.category}">`;
+            const container = document.getElementById('menuContainer');
+            menuData.forEach(cat => {
+                const catDiv = document.createElement('div');
+                catDiv.className = "space-y-2 mb-6";
+                catDiv.innerHTML = `<h3 class="font-bold text-amber-700 border-b pb-1 mb-3 text-lg">${cat.category}</h3>`;
+                
                 cat.items.forEach(item => {
-                    html += `<option value="${item.name}" data-price="${item.price}">${item.name} - $${item.price}</option>`;
+                    const btn = document.createElement('button');
+                    btn.className = "w-full bg-white p-4 rounded-xl shadow-sm border-2 border-transparent text-left flex justify-between items-center transition active:scale-95 hover:border-amber-200";
+                    const priceInfo = item.m ? `M: $${item.m}` : `L: $${item.l}`;
+                    btn.innerHTML = `
+                        <span class="font-medium text-gray-800">${item.name}</span>
+                        <span class="text-sm font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-md">${priceInfo}</span>
+                    `;
+                    btn.onclick = () => openModal(item);
+                    catDiv.appendChild(btn);
                 });
-                html += `</optgroup>`;
+                container.appendChild(catDiv);
             });
-            select.innerHTML = html;
+            fetchOrders();
+            // 每 30 秒自動刷新，減少對 Google API 的頻率，避免被限制
+            setInterval(fetchOrders, 30000); 
         }
 
-        function updatePrice() {
-            const select = document.getElementById('drinkSelect');
-            const topping = parseInt(document.getElementById('topping').value);
-            const selectedOption = select.options[select.selectedIndex];
-            if (selectedOption && !selectedOption.disabled) {
-                const basePrice = parseInt(selectedOption.getAttribute('data-price'));
-                document.getElementById('currentPriceDisplay').innerText = basePrice + topping;
-            }
-        }
-
-        async function addToOrder() {
-            const user = document.getElementById('userName').value.trim();
-            const select = document.getElementById('drinkSelect');
-            const sugar = document.getElementById('sugar').value;
-            const ice = document.getElementById('ice').value;
-            const toppingValue = parseInt(document.getElementById('topping').value);
-            const toppingName = document.getElementById('topping').options[document.getElementById('topping').selectedIndex].text;
-            const addBtn = document.getElementById('addBtn');
-            const statusText = document.getElementById('syncStatus');
-
-            if (!user) return alert("請輸入點餐人姓名！");
-            if (!select.value) return alert("請選擇飲品！");
-
-            const selectedOption = select.options[select.selectedIndex];
-            const basePrice = parseInt(selectedOption.getAttribute('data-price'));
+        function openModal(item) {
+            currentSelection = { drink: item, size: '', ice: '', sugar: '', price: 0 };
+            document.getElementById('modalDrinkName').innerText = item.name;
+            const sizeDiv = document.getElementById('sizeOptions');
+            sizeDiv.innerHTML = '';
             
-            const newOrder = {
-                id: Date.now(),
-                user,
-                drink: select.value,
-                sugar,
-                ice,
-                topping: toppingValue > 0 ? toppingName : "無",
-                price: basePrice + toppingValue
+            ['m', 'l'].forEach(s => {
+                if (item[s]) {
+                    const b = document.createElement('button');
+                    b.className = "size-opt border-2 p-3 rounded-lg flex-1 text-center font-bold transition-all";
+                    b.innerText = `${s.toUpperCase()} ($${item[s]})`;
+                    b.onclick = () => selectOpt('size', s, item[s]);
+                    sizeDiv.appendChild(b);
+                }
+            });
+            
+            document.querySelectorAll('.ice-opt, .sugar-opt').forEach(el => el.classList.remove('bg-amber-500', 'text-white', 'border-amber-500'));
+            document.getElementById('toppingOpt').value = "";
+            document.getElementById('orderModal').classList.remove('hidden');
+        }
+
+        function selectOpt(type, val, price) {
+            currentSelection[type] = val;
+            if (price) currentSelection.price = price;
+            
+            document.querySelectorAll(`.${type}-opt`).forEach(el => {
+                const text = el.innerText.toUpperCase();
+                if (text.includes(val.toUpperCase()) || text === val) {
+                    el.classList.add('bg-amber-500', 'text-white', 'border-amber-500');
+                } else {
+                    el.classList.remove('bg-amber-500', 'text-white', 'border-amber-500');
+                }
+            });
+        }
+
+        function closeModal() {
+            if (isSubmitting) return;
+            document.getElementById('orderModal').classList.add('hidden');
+        }
+
+        async function submitOrder() {
+            if (isSubmitting) return;
+
+            const name = document.getElementById('userName').value.trim();
+            if (!name) return alert("請輸入您的稱呼！");
+            if (!currentSelection.size || !currentSelection.ice || !currentSelection.sugar) {
+                return alert("請完整選擇 容量、冰塊 與 甜度！");
+            }
+
+            const topping = document.getElementById('toppingOpt').value;
+            const totalPrice = currentSelection.price + (topping ? 10 : 0);
+            
+            const payload = {
+                action: "add",
+                userName: name,
+                drinkName: currentSelection.drink.name,
+                size: currentSelection.size.toUpperCase(),
+                ice: currentSelection.ice,
+                sugar: currentSelection.sugar,
+                topping: topping || "無",
+                price: totalPrice,
+                id: "ID-" + Date.now() + Math.floor(Math.random()*1000)
             };
 
-            // 先更新本地 UI
-            orders.push(newOrder);
-            saveAndRender();
-
-            // 嘗試同步到 Google Sheets
-            addBtn.disabled = true;
-            statusText.innerHTML = '<span class="loading-spinner"></span> 正在同步至試算表...';
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
             
+            isSubmitting = true;
+            btn.innerHTML = `<div class="loading-spinner"></div> 傳送中...`;
+            btn.classList.add('opacity-50');
+
             try {
-                // 使用 JSONP 或 Fetch 搭配 mode: 'no-cors' 視 Script 寫法而定
-                // 這裡推薦標準 fetch 搭配 Google Apps Script 的 doPost
+                // 使用 POST 傳送。如果 GAS 端遇到 CORS 問題，這會確保請求至少能送達
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // 處理跨網域
-                    cache: 'no-cache',
+                    mode: 'no-cors', // 這是為了避開 GAS 常見的轉址 CORS 錯誤
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newOrder)
+                    body: JSON.stringify(payload)
                 });
-                statusText.innerText = "✅ 已成功同步到雲端資料庫";
-                setTimeout(() => { statusText.innerText = ""; }, 3000);
+                
+                // 為了讓使用者體驗更好，雖然是 no-cors 我們預設他成功
+                setTimeout(async () => {
+                    closeModal();
+                    await fetchOrders();
+                    isSubmitting = false;
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('opacity-50');
+                    alert("點餐成功！資料正在進入試算表紀錄區。");
+                }, 1000);
+
             } catch (e) {
-                console.error(e);
-                statusText.innerText = "❌ 雲端同步失敗，但已保存在本地";
-            } finally {
-                addBtn.disabled = false;
+                alert("提交失敗，請檢查網路連線或系統連結是否正確。");
+                isSubmitting = false;
+                btn.innerHTML = originalText;
+                btn.classList.remove('opacity-50');
             }
+        }
+
+        async function fetchOrders() {
+            const list = document.getElementById('orderList');
+            const status = document.getElementById('status');
             
-            select.selectedIndex = 0;
-            document.getElementById('topping').selectedIndex = 0;
-            updatePrice();
-        }
-
-        function deleteOrder(id) {
-            orders = orders.filter(o => o.id !== id);
-            saveAndRender();
-        }
-
-        function editOrder(id) {
-            const order = orders.find(o => o.id === id);
-            if (!order) return;
-            document.getElementById('userName').value = order.user;
-            document.getElementById('drinkSelect').value = order.drink;
-            document.getElementById('sugar').value = order.sugar;
-            document.getElementById('ice').value = order.ice;
-            deleteOrder(id);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function clearAll() {
-            if(confirm("確定要清空所有紀錄嗎？（注意：這不會影響已上傳到 Google Sheet 的資料）")) {
-                orders = [];
-                saveAndRender();
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=get`);
+                const data = await res.json();
+                allOrders = data;
+                renderOrders();
+                status.innerText = "連線正常 (剛才已更新)";
+                status.classList.replace('bg-red-500', 'bg-amber-600');
+            } catch (e) {
+                status.innerText = "讀取異常，請手動刷新";
+                status.classList.replace('bg-amber-600', 'bg-red-500');
             }
-        }
-
-        function saveAndRender() {
-            localStorage.setItem('teaOrders', JSON.stringify(orders));
-            renderOrders();
         }
 
         function renderOrders() {
             const list = document.getElementById('orderList');
-            const totalDisplay = document.getElementById('totalPrice');
-            const countDisplay = document.getElementById('totalCount');
+            const totalEl = document.getElementById('totalPrice');
             
-            if (orders.length === 0) {
-                list.innerHTML = '<p class="text-gray-400 text-center py-4">目前尚無點餐紀錄</p>';
-                totalDisplay.innerText = "NT$ 0";
-                countDisplay.innerText = "(0 杯)";
+            if (!allOrders || allOrders.length === 0) {
+                list.innerHTML = `<p class="text-gray-400 text-center py-8">目前尚無點餐資料，快來當第一個！</p>`;
+                totalEl.innerText = "$0";
                 return;
             }
 
-            let html = "";
             let total = 0;
-            orders.forEach(o => {
-                total += o.price;
-                html += `
-                <div class="flex justify-between items-center p-3 border rounded-lg bg-gray-50 hover:bg-gray-100">
-                    <div class="flex-1">
-                        <span class="font-bold text-teal-800">${o.user}</span>: 
-                        <span class="text-gray-800">${o.drink}</span> 
-                        <span class="text-xs bg-white border px-1 rounded text-gray-500">${o.sugar}/${o.ice}</span>
-                        ${o.topping !== "無" ? `<span class="text-xs text-orange-600 font-bold">+${o.topping}</span>` : ""}
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="font-bold shrink-0">$${o.price}</span>
-                        <div class="flex gap-2">
-                            <button onclick="editOrder(${o.id})" class="text-blue-500 text-sm">編輯</button>
-                            <button onclick="deleteOrder(${o.id})" class="text-red-500 text-sm">刪除</button>
+            list.innerHTML = allOrders.map(order => {
+                total += parseInt(order.price) || 0;
+                return `
+                <div class="border-2 rounded-xl p-4 relative bg-white shadow-sm hover:border-amber-300 transition">
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-1">
+                            <span class="inline-block bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full mb-1">${order.userName}</span>
+                            <h4 class="font-bold text-gray-800 text-lg">${order.drinkName}</h4>
+                            <p class="text-sm text-gray-500 font-medium">
+                                <span class="bg-gray-100 px-1.5 py-0.5 rounded">${order.size}</span>
+                                <span class="mx-1">/</span> ${order.sugar} 
+                                <span class="mx-1">/</span> ${order.ice} 
+                                ${order.topping !== "無" ? `<span class="mx-1">/</span> <span class="text-amber-600">+${order.topping}</span>` : ""}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-black text-amber-600 text-xl font-mono">$${order.price}</p>
+                            <button onclick="deleteOrder('${order.id}')" class="text-xs text-red-400 mt-2 flex items-center gap-1 hover:text-red-600 transition ml-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                刪除
+                            </button>
                         </div>
                     </div>
                 </div>`;
-            });
-
-            list.innerHTML = html;
-            totalDisplay.innerText = `NT$ ${total}`;
-            countDisplay.innerText = `(${orders.length} 杯)`;
+            }).reverse().join(''); // 最新的顯示在最上面
+            totalEl.innerText = `$${total}`;
         }
 
-        function generateLineMessage() {
-            if (orders.length === 0) return alert("目前還沒有點餐資料喔！");
+        async function deleteOrder(id) {
+            if (!confirm("確定要刪除這筆點餐嗎？")) return;
+            try {
+                document.getElementById('status').innerText = "正在刪除...";
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ action: "delete", id: id })
+                });
+                setTimeout(fetchOrders, 800);
+            } catch (e) { alert("刪除失敗"); }
+        }
+
+        function copyToLine() {
+            if (allOrders.length === 0) return alert("目前沒有訂單！");
             
-            let msg = "🥤 喫茶小舖 團購訂單\n";
-            msg += "====================\n";
+            let summary = "🥤 喫茶小舖 訂單統計 🥤\n------------------\n";
+            let total = 0;
             
-            const summary = {};
-            orders.forEach(o => {
-                const key = `${o.drink} (${o.sugar}/${o.ice}${o.topping !== "無" ? ` +${o.topping}` : ""})`;
-                summary[key] = (summary[key] || 0) + 1;
+            allOrders.forEach((o, i) => {
+                summary += `${i+1}. ${o.userName}: ${o.drinkName}(${o.size})/${o.sugar}/${o.ice}${o.topping !== "無" ? "+"+o.topping : ""}\n`;
+                total += parseInt(o.price);
             });
-
-            for (const [desc, qty] of Object.entries(summary)) {
-                msg += `${desc} x ${qty}\n`;
-            }
-
-            msg += "====================\n";
-            msg += `總計：${orders.length} 杯 / NT$ ${orders.reduce((a,b) => a + b.price, 0)}\n\n`;
-            msg += "【點餐明細】\n";
-            orders.forEach((o, i) => {
-                msg += `${i+1}. ${o.user}: ${o.drink}(${o.sugar}/${o.ice}${o.topping !== "無" ? `+${o.topping}`: ""})\n`;
-            });
-
-            document.getElementById('lineContent').value = msg;
-            toggleModal(true);
-        }
-
-        function toggleModal(show) {
-            document.getElementById('modal').classList.toggle('hidden', !show);
-        }
-
-        function copyLineMessage() {
-            const textArea = document.getElementById('lineContent');
-            textArea.select();
+            
+            summary += `------------------\n杯數：${allOrders.length} 杯\n總額：$${total} 元`;
+            
+            const el = document.createElement('textarea');
+            el.value = summary;
+            document.body.appendChild(el);
+            el.select();
             document.execCommand('copy');
-            alert("已複製到剪貼簿，快貼給老闆吧！");
+            document.body.removeChild(el);
+            
+            alert("已成功複製 LINE 訂單內容！");
         }
 
-        window.onload = () => {
-            initMenu();
-            renderOrders();
-        };
+        window.onload = initMenu;
     </script>
 </body>
 </html>
